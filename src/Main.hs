@@ -1,38 +1,61 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE TypeOperators     #-}
 module Main
     ( main
     ) where
 
-import Data.Aeson
-import GHC.Generics
+import Google.DataTable
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
 
-data Cat = 
-    Cat { name  :: String
-        , breed :: String
-        }
-    deriving (Show, Generic)
+type API = "slice-data" :> Get '[JSON] DataTable :<|> Raw
 
-instance ToJSON Cat
-
-type API = "static" :> Raw 
-      :<|> "cats" :> Get '[JSON] [Cat]
-
-cats :: [Cat]
-cats = [ Cat "Sigge" "Ragdoll", Cat "Frasse" "Maine Coon" ]
+sliceData :: DataTable
+sliceData = 
+    DataTable { cols = [ Column { id_ = Nothing
+                                , label = Just "Topping"
+                                , type_ = StringT }
+                       , Column { id_ = Nothing
+                                , label = Just "Slices"
+                                , type_ = NumberT }
+                       ]
+              , rows = [ Row { c = [ Cell { v = Just (String "Mushrooms")
+                                          , f = Nothing }
+                                   , Cell { v = Just (Integral 3)
+                                          , f = Nothing }
+                                   ] }
+                       , Row { c = [ Cell { v = Just (String "Onions")
+                                          , f = Nothing }
+                                   , Cell { v = Just (Integral 1)
+                                          , f = Nothing }
+                                   ] }
+                       , Row { c = [ Cell { v = Just (String "Olives")
+                                          , f = Nothing }
+                                   , Cell { v = Just (Integral 1)
+                                          , f = Nothing }
+                                   ] }
+                       , Row { c = [ Cell { v = Just (String "Zucchini")
+                                          , f = Nothing }
+                                   , Cell { v = Just (Integral 1)
+                                          , f = Nothing }
+                                   ] }
+                       , Row { c = [ Cell { v = Just (String "Pepperoni")
+                                          , f = Nothing }
+                                   , Cell { v = Just (Integral 2)
+                                          , f = Nothing }
+                                   ] }
+                       ]
+              }
 
 api :: Proxy API
 api = Proxy
 
 server :: Server API
-server =
-    serveDirectory "static"
-    :<|> return cats
+server = return sliceData
+    :<|> serveDirectory "static"
 
 app :: Application
 app = serve api server
